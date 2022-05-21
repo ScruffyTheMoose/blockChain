@@ -78,7 +78,7 @@ class Blockchain:
 
     def registerNode(self, address):
         parsedURL = urlparse(address)
-        self.nodes.add(parsedURL)
+        self.nodes.add(parsedURL.netloc)
 
     def verifyChain(self, chain):
         prevBlock = chain[0]
@@ -107,7 +107,7 @@ class Blockchain:
         maxLength = len(self.chain)
 
         for node in neighbors:
-            response = requests.get(f'{node}/chain')
+            response = requests.get(f'http://{node}/chain')
 
             if response.status_code == 200:
                 length = response.json()['length']
