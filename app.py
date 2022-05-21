@@ -1,7 +1,6 @@
-from textwrap import dedent
-
 from chain import Blockchain
 from uuid import uuid4
+import sys
 
 from flask import Flask, jsonify, request
 
@@ -28,7 +27,7 @@ def mine():
     )
 
     prevHash = blockchain.hash(prevBlock)
-    block = blockchain.newBlock(proof=proof, prevhash=prevHash)
+    block = blockchain.newBlock(proof, prevHash)
 
     response = {
         'message': "New Block forged",
@@ -72,5 +71,44 @@ def fullChain():
     return jsonify(response), 200
 
 
+@app.route('/nodes/register', methods=['POST'])
+def registerNodes():
+    args = request.get_json()
+    nodes = args['nodes']
+
+    if nodes is None:
+        return "Error: Please supply a valid list of Nodes", 400
+
+    for node in nodes:
+        blockchain.registerNode(node)
+
+    response = {
+        'message': "New nodes have been registered",
+        'nodes': list(blockchain.nodes)
+    }
+
+    return jsonify(response), 201
+
+
+@app.route('/nodes/resolve', methods=['GET'])
+def consensus():
+    replaced = blockchain.resolveConflicts()
+
+    if replaced:
+        response = {
+            'message': "Our chain was replaced",
+            'chain': blockchain.chain
+        }
+
+    else:
+        response = {
+            'message': "Our chain is authoritative",
+            'chain': blockchain.chain
+        }
+
+    return jsonify(response), 200
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    portVal = sys.argv[1]
+    app.run(host='0.0.0.0', port=portVal)
