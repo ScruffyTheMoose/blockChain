@@ -182,7 +182,7 @@ class Blockchain:
     # resolving conflicts should be called for all nodes when any node builds a new block or a new node is added
     # this would ensure there are never conflicts between two different chains
     def chainConsensus(self) -> bool:
-        """Resolves all conflicts across the Blockchain to ensure consensus of data
+        """Resolves all conflicts across the network to ensure consensus of chain data
 
         Returns:
             bool: True if conflicts existed and were resolved, else False for no changes made
@@ -213,6 +213,11 @@ class Blockchain:
         return False
 
     def nodeConsensus(self) -> bool:
+        """Checks that node registry is up-to-date
+
+        Returns:
+            bool: True if update was done, else False for no changes made
+        """
 
         neighbors = self.nodes
         initLength = len(self.nodes)
