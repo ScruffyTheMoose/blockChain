@@ -120,5 +120,5 @@ def consensus():
 
 
 if __name__ == "__main__":
-    portVal = sys.argv[1]
-    app.run(host="0.0.0.0", port=portVal)
+    portNum = sys.argv[1]
+    app.run(host="0.0.0.0", port=portNum)
