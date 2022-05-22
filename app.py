@@ -1,5 +1,8 @@
 from chain import Blockchain
 from uuid import uuid4
+from urllib.parse import urlparse
+import requests
+import json
 import sys
 
 from flask import Flask, jsonify, request
@@ -72,7 +75,7 @@ def newTrans():
 
 
 @app.route("/chain", methods=["GET"])
-def fullChain():
+def getChain():
     """[GET] - Produces the entire chain"""
 
     response = {
@@ -83,38 +86,73 @@ def fullChain():
     return jsonify(response), 200
 
 
+@app.route("/nodes", methods=["GET"])
+def getNodes():
+    """[GET] - Produce a node's registry of nodes"""
+
+    response = {
+        "nodes": list(blockchain.nodes),
+        "length": len(blockchain.nodes),
+    }
+
+    return jsonify(response), 200
+
+
 @app.route("/nodes/register", methods=["POST"])
 def registerNodes():
     """[POST] - Register a new node on the chain"""
 
-    args = request.get_json()
-    nodes = args["nodes"]
+    nodes = request.get_json()["nodes"]
+    initNodes = blockchain.nodes
+    failed = list()
 
     if nodes is None:
         return "Error: Please supply a valid list of Nodes", 400
 
     for node in nodes:
-        blockchain.registerNode(node)
+        registration = blockchain.registerNode(node)
 
-    response = {
-        "message": "New nodes have been registered",
-        "nodes": list(blockchain.nodes),
-    }
+        # checking that address was valid
+        if not registration:
+            failed.append(node)
+
+    if failed:
+        # there were errors, resetting registry to initial
+        blockchain.nodes = initNodes
+
+        response = {
+            "message": "There were errors during registration with some nodes, the registry was not changed",
+            "errors": failed,
+            "nodes": list(blockchain.nodes),
+        }
+
+    else:
+        response = {
+            "message": "New nodes have been registered",
+            "nodes": list(blockchain.nodes),
+        }
 
     return jsonify(response), 201
 
 
-@app.route("/nodes/resolve", methods=["GET"])
+@app.route("/resolve", methods=["GET"])
 def consensus():
     """[GET] - Resolves any existing conflicts and ensures consensus across the chain"""
 
-    replaced = blockchain.resolveConflicts()
+    nodeStat = blockchain.nodeConsensus()
+    chainStat = blockchain.chainConsensus()
 
-    if replaced:
+    if chainStat:
         response = {"message": "Our chain was replaced", "chain": blockchain.chain}
-
     else:
         response = {"message": "Our chain is authoritative", "chain": blockchain.chain}
+
+    if nodeStat:
+        response["message"] += " - Our node registry was updated"
+        response["nodes"] = list(blockchain.nodes)
+    else:
+        response["message"] += " - Our node registry is authoratitive"
+        response["nodes"] = list(blockchain.nodes)
 
     return jsonify(response), 200
 
