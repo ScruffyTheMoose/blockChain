@@ -134,15 +134,21 @@ class Blockchain:
         # good proof key produced hash with 4 leading zeros
         return hashed[:4] == "0000"
 
-    def registerNode(self, address):
+    def registerNode(self, address) -> bool:
         """Registers a new node on the chain
 
         Args:
             address (str): The network address of the new node
         """
 
-        parsedURL = urlparse(address)
-        self.nodes.add(parsedURL.netloc)
+        parsedURL = urlparse(address).netloc
+
+        # checking that URL was not reduced to empty string
+        if parsedURL:
+            self.nodes.add(parsedURL)
+            return True
+
+        return False
 
     def verifyChain(self, chain) -> bool:
         """Verifies that the current chain is valid by checking all hashes and proof keys are valid
@@ -175,7 +181,7 @@ class Blockchain:
     # must also verify that all nodes share identical node lists
     # resolving conflicts should be called for all nodes when any node builds a new block or a new node is added
     # this would ensure there are never conflicts between two different chains
-    def resolveConflicts(self) -> bool:
+    def chainConsensus(self) -> bool:
         """Resolves all conflicts across the Blockchain to ensure consensus of data
 
         Returns:
@@ -186,21 +192,42 @@ class Blockchain:
         newChain = None
 
         # length of our chain
-        maxLength = len(self.chain)
+        currentLength = len(self.chain)
 
         for node in neighbors:
+            # request to node for its chain
             response = requests.get(f"http://{node}/chain")
 
             if response.status_code == 200:
                 length = response.json()["length"]
                 chain = response.json()["chain"]
 
-                if length > maxLength and self.verifyChain(chain):
-                    maxLength = length
+                if length > currentLength and self.verifyChain(chain):
+                    currentLength = length
                     newChain = chain
 
         if newChain:
             self.chain = newChain
+            return True
+
+        return False
+
+    def nodeConsensus(self) -> bool:
+
+        neighbors = self.nodes
+        initLength = len(self.nodes)
+
+        for node in neighbors:
+            # request to node for its registered nodes
+            response = requests.get(f"http://{node}/nodes")
+
+            if response.status_code == 200:
+                # joining both sets, any new nodes will be added
+                otherNodes = response.json()["nodes"]
+                self.nodes = self.nodes.union(otherNodes)
+
+        if len(self.nodes) > initLength:
+            self.nodeConsensus()
             return True
 
         return False
