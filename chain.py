@@ -242,7 +242,7 @@ class Blockchain:
                 self.nodes = self.nodes.union(otherNodes)
 
         if len(self.nodes) > initLength:
-            self.nodeConsensus()
+            self.nodeConsensus()  # calls recursively until length is static
             return True
 
         return False
