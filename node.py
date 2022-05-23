@@ -105,12 +105,20 @@ def replaceChain():
 
     newChain = request.get_json()["chain"]
 
-    blockchain.chain = newChain
+    verify = blockchain.verifyChain(newChain)
 
-    response = {
-        "message": "The chain on this node was replaced with the authoritative chain",
-        "chain": blockchain.chain,
-    }
+    if verify:
+        blockchain.chain = newChain
+
+        response = {
+            "message": "The chain on this node was replaced with the authoritative chain",
+            "chain": blockchain.chain,
+        }
+    else:
+        response = {
+            "message": "The submitted chain was failed verification and was rejected",
+            "chain": blockchain.chain,
+        }
 
     return jsonify(response), 201
 
