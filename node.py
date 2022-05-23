@@ -1,4 +1,4 @@
-import this
+from urllib import response
 from chain import Blockchain
 from uuid import uuid4
 from urllib.parse import urlparse
@@ -99,6 +99,22 @@ def getChain():
     return jsonify(response), 200
 
 
+@app.route("/chain/replace", methods=["POST"])
+def replaceChain():
+    """[POST] - Replaces the chain on this node with the authoritative chain"""
+
+    newChain = request.get_json()["chain"]
+
+    blockchain.chain = newChain
+
+    response = {
+        "message": "The chain on this node was replaced with the authoritative chain",
+        "chain": blockchain.chain,
+    }
+
+    return jsonify(response), 201
+
+
 @app.route("/nodes", methods=["GET"])
 def getNodes():
     """[GET] - Produce the node registry on this node"""
@@ -109,6 +125,23 @@ def getNodes():
     }
 
     return jsonify(response), 200
+
+
+@app.route("/nodes/replace", methods=["POST"])
+def replaceNodes():
+    """[POST] - Replaces the node registry on this node with the authoritative registry"""
+
+    newRegistry = request.get_json()["nodes"]
+
+    for node in newRegistry:
+        blockchain.registerNode(node)
+
+    response = {
+        "message": "Node registry has been updated!",
+        "nodes": list(blockchain.nodes),
+    }
+
+    return jsonify(response), 201
 
 
 @app.route("/nodes/register", methods=["POST"])
@@ -180,12 +213,25 @@ def responseRegister():
 
 @app.route("/resolve", methods=["GET"])
 def consensus():
-    """[GET] - Resolves any existing conflicts and ensures consensus across the chain"""
+    """[GET] - Resolves any existing conflicts and ensures consensus on this node with the network"""
 
     # checks that the node registry is up-to-date
+    # when nodeConsensus() completes, this node will have the authoritative registry
     nodeStat = blockchain.nodeConsensus()
     # then checks all nodes for most current chain
     chainStat = blockchain.chainConsensus()
+
+    # authoritative list of node registry to be sent to all other nodes
+    authNodes = list(blockchain.nodes)
+    nodeObj = {"nodes": list(authNodes)}
+
+    # authoritative chain to be sent to all other nodes
+    chainObj = {"chain": blockchain.chain}
+
+    # sending authoritative node registry and chain to all other node endpoints
+    for node in authNodes:
+        requests.post(f"{node}/nodes/replace", json=nodeObj)
+        requests.post(f"{node}/chain/replace", json=chainObj)
 
     if chainStat:
         response = {"message": "Our chain was replaced", "chain": blockchain.chain}
@@ -196,7 +242,7 @@ def consensus():
         response["message"] += " - Our node registry was updated"
         response["nodes"] = list(blockchain.nodes)
     else:
-        response["message"] += " - Our node registry is authoratitive"
+        response["message"] += " - Our node registry is authorititive"
         response["nodes"] = list(blockchain.nodes)
 
     return jsonify(response), 200
