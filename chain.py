@@ -5,6 +5,15 @@ import requests
 from urllib.parse import urlparse
 
 
+# TBD
+# Each node needs to have an actual wallet for tracking all sent/recieved units
+
+# Each node's UUID needs to be tracked alongside the nodes address so when a transaction is registered, all the nodes can read
+# the transaction and be updated accordingly
+
+# Transaction validation needs to be built
+
+
 class Blockchain:
     def __init__(self) -> None:
         self.chain = list()
@@ -27,7 +36,7 @@ class Blockchain:
 
         block = {
             "index": len(self.chain) + 1,
-            "timestamp": time.time(),
+            "time": time.time(),
             "transactions": self.transactions,
             "proof": proof,
             "prev_hash": prevHash,
@@ -59,6 +68,7 @@ class Blockchain:
                 "sender": sender,
                 "recipient": recipient,
                 "amoumnt": amount,
+                "time": time.time(),
             }
         )
 
@@ -219,10 +229,10 @@ class Blockchain:
             bool: True if update was done, else False for no changes made
         """
 
-        neighbors = self.nodes
+        children = self.nodes
         initLength = len(self.nodes)
 
-        for node in neighbors:
+        for node in children:
             # request to node for its registered nodes
             response = requests.get(f"http://{node}/nodes")
 
