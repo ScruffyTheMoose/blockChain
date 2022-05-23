@@ -52,6 +52,18 @@ def mine():
     return jsonify(response), 200
 
 
+@app.route("/transactions", methods=["GET"])
+def getTrans():
+    """[GET] - Produce the transaction list on this node"""
+
+    response = {
+        "transactions": blockchain.transactions,
+        "length": len(blockchain.transactions),
+    }
+
+    return jsonify(response), 200
+
+
 @app.route("/transactions/new", methods=["POST"])
 def newTrans():
     """[POST] - Creates a new transaction on the current Block"""
@@ -77,7 +89,7 @@ def newTrans():
 
 @app.route("/chain", methods=["GET"])
 def getChain():
-    """[GET] - Produces the entire chain"""
+    """[GET] - Produces the entire chain on this node"""
 
     response = {
         "chain": blockchain.chain,
@@ -89,7 +101,7 @@ def getChain():
 
 @app.route("/nodes", methods=["GET"])
 def getNodes():
-    """[GET] - Produce a node's registry of nodes"""
+    """[GET] - Produce the node registry on this node"""
 
     response = {
         "nodes": list(blockchain.nodes),
@@ -170,7 +182,9 @@ def responseRegister():
 def consensus():
     """[GET] - Resolves any existing conflicts and ensures consensus across the chain"""
 
+    # checks that the node registry is up-to-date
     nodeStat = blockchain.nodeConsensus()
+    # then checks all nodes for most current chain
     chainStat = blockchain.chainConsensus()
 
     if chainStat:
