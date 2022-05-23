@@ -151,7 +151,7 @@ class Blockchain:
             address (str): The network address of the new node
         """
 
-        parsedURL = urlparse(address).netloc
+        parsedURL = "http://" + urlparse(address).netloc
 
         # checking that URL was not reduced to empty string
         if parsedURL:
@@ -206,7 +206,7 @@ class Blockchain:
 
         for node in neighbors:
             # request to node for its chain
-            response = requests.get(f"http://{node}/chain")
+            response = requests.get(f"{node}/chain")
 
             if response.status_code == 200:
                 length = response.json()["length"]
@@ -234,7 +234,7 @@ class Blockchain:
 
         for node in children:
             # request to node for its registered nodes
-            response = requests.get(f"http://{node}/nodes")
+            response = requests.get(f"{node}/nodes")
 
             if response.status_code == 200:
                 # joining both sets, any new nodes will be added
