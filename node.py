@@ -1,3 +1,4 @@
+import this
 from chain import Blockchain
 from uuid import uuid4
 from urllib.parse import urlparse
@@ -106,7 +107,12 @@ def registerNodes():
     initNodes = blockchain.nodes
     failed = list()
 
-    if nodes is None:
+    thisNode = request.url_root
+    submission = {
+        "nodes": [f"{thisNode}"],
+    }
+
+    if not nodes or nodes is None:
         return "Error: Please supply a valid list of Nodes", 400
 
     for node in nodes:
@@ -115,6 +121,8 @@ def registerNodes():
         # checking that address was valid
         if not registration:
             failed.append(node)
+        else:
+            requests.post(f"{node}/nodes/response_register", json=submission)
 
     if failed:
         # there were errors, resetting registry to initial
@@ -131,6 +139,29 @@ def registerNodes():
             "message": "New nodes have been registered",
             "nodes": list(blockchain.nodes),
         }
+
+    return jsonify(response), 201
+
+
+@app.route("/nodes/response_register", methods=["POST"])
+def responseRegister():
+    """[POST] - Endpoint for cross registering with a newly registered node
+
+    Ex: Node-A registers on Node-B. This endpoint will be called by Node-B automatically to register itself on Node-A.
+    This will ensure double-linkage across the chain.
+    """
+
+    nodes = request.get_json()["nodes"]
+
+    if not nodes or nodes is None:
+        return "Error: Please supply a valid list of Nodes", 400
+
+    blockchain.registerNode(nodes[0])
+
+    response = {
+        "message": "New nodes have been registered",
+        "nodes": list(blockchain.nodes),
+    }
 
     return jsonify(response), 201
 
@@ -159,4 +190,4 @@ def consensus():
 
 if __name__ == "__main__":
     portNum = sys.argv[1]
-    app.run(host="0.0.0.0", port=portNum)
+    app.run(host="127.0.0.1", port=portNum)
