@@ -5,14 +5,9 @@ import sys
 
 from flask import Flask, jsonify, request
 
-
-# when a new block is mined, a few things need to happen with the order TBD
-# first, every transaction across all the nodes needs to be aggregated somewhere for them to be added to the newly mined block
-# then, once the block is minted, all nodes need to be resolved so that they are tracking the new block
-# as part of the resolution, every node needs to check and remove any transactions that are already stored in a block
-
-# this should successfully add ALL network transactions to the new block as well as removing those same transactions from each nodes registry
-# lastly, since all nodes are resolved, all nodes will have the authoritative chain and node registry
+# /holdings endpoint
+# transaction amounts need to be validated
+# atm proofs dont matter for transactions, just that every sender actually has ownership of what they are sending and not making up values
 
 # instantiating flask node
 app = Flask(__name__)
@@ -21,7 +16,7 @@ app = Flask(__name__)
 node_id = str(uuid4()).replace("-", "")
 
 # instantiate blockchain
-blockchain = Blockchain()
+blockchain = Blockchain(node_id)
 
 
 @app.route("/mine", methods=["GET"])
@@ -73,6 +68,15 @@ def mine():
     return jsonify(response), 200
 
 
+@app.route("/id", methods=["GET"])
+def getID():
+    """[GET] - Returns this nodes unique ID"""
+
+    response = {"id": blockchain.id}
+
+    return jsonify(response), 200
+
+
 @app.route("/transactions", methods=["GET"])
 def getTrans():
     """[GET] - Produce the transaction list on this node"""
@@ -96,6 +100,9 @@ def newTrans():
     # verifying required 3 arguments were given
     if not all(k in args for k in reqs):
         return "Missing arguments", 400
+
+    if args["sender"] != blockchain.id:
+        return "Sender address does not match this node", 400
 
     # creating new transaction which returns the index of the block where the transaction will be stored
     idx = blockchain.newTrans(
@@ -303,6 +310,41 @@ def consensus():
     else:
         response["message"] += " - Our node registry is authorititive"
         response["nodes"] = list(blockchain.nodes)
+
+    return jsonify(response), 200
+
+
+@app.route("/status", methods=["GET"])
+def status():
+    """[GET] - Produces all connections and account associated holdings"""
+
+    # ISSUE: This will pull the current status, but if the node doesn't have access to authoritative chain, the holdings are incorrect
+    # SOLUTION: Chain consensus is required for status
+    # We will leave it broken for now to see what types of disconnects develop across the network
+
+    amount = 0
+
+    # checking all the blocks
+    for block in blockchain.chain:
+        for transaction in block["transactions"].values():
+            if transaction["sender"] == blockchain.id:
+                amount -= transaction["amount"]
+
+            if transaction["recipient"] == blockchain.id:
+                amount += transaction["amount"]
+
+    # checking currently tracked transactions
+    for transaction in blockchain.transactions.values():
+        if transaction["sender"] == blockchain.id:
+            amount -= transaction["amount"]
+
+        if transaction["recipient"] == blockchain.id:
+            amount += transaction["amount"]
+
+    response = {
+        "connections": list(blockchain.nodes),
+        "holdings": amount,
+    }
 
     return jsonify(response), 200
 
