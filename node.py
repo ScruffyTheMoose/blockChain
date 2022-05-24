@@ -1,12 +1,18 @@
-from urllib import response
 from chain import Blockchain
 from uuid import uuid4
-from urllib.parse import urlparse
 import requests
-import json
 import sys
 
 from flask import Flask, jsonify, request
+
+
+# when a new block is mined, a few things need to happen with the order TBD
+# first, every transaction across all the nodes needs to be aggregated somewhere for them to be added to the newly mined block
+# then, once the block is minted, all nodes need to be resolved so that they are tracking the new block
+# as part of the resolution, every node needs to check and remove any transactions that are already stored in a block
+
+# this should successfully add ALL network transactions to the new block as well as removing those same transactions from each nodes registry
+# lastly, since all nodes are resolved, all nodes will have the authoritative chain and node registry
 
 # instantiating flask node
 app = Flask(__name__)
@@ -30,15 +36,30 @@ def mine():
     proof = blockchain.pow(prevProof)
 
     # awarding one unit for successfully mined Block
-    blockchain.newTrans(
-        sender="0",
-        recipient=node_id,
-        amount=1,
-    )
+    blockchain.newTrans(sender="0", recipient=node_id, amount=1)
+
+    # updating this node registry to be able to collect all transactions across the network
+    blockchain.nodeConsensus()
+
+    # collecting all transactions
+    for node in list(blockchain.nodes):
+        data = requests.get(f"{node}/transactions")
+
+        # appending other transactions to this nodes
+        if data.status_code == 200:
+
+            # merging the two dictionaries
+            blockchain.transactions = {
+                **blockchain.transactions,
+                **data.json()["transactions"],
+            }
 
     # creating the new Block and adding it to the chain
     prevHash = blockchain.hash(prevBlock)
     block = blockchain.newBlock(proof, prevHash)
+
+    # now that new block has been added to chain, we resolve the network
+    requests.get(f"{request.url_root}/resolve")
 
     # response to be passed back to node
     response = {
@@ -85,6 +106,36 @@ def newTrans():
 
     response = {"message": f"Transaction will be added to Block {idx}"}
     return jsonify(response), 201
+
+
+@app.route("/transactions/cleanup", methods=["GET"])
+def cleanTrans():
+    """[GET] - Checks the chain and removes any redundant transactions from this nodes list"""
+
+    removed = list()
+
+    # checking each block
+    for block in blockchain.chain:
+
+        # checking each transaction in this node
+        for id in blockchain.transactions.keys():
+
+            # checking transaction IDs from this node against the authoritative chain
+            # removing any transactions with IDs already in a block
+            if id in block["transactions"]:
+                removed.append(blockchain.transactions.pop(id))
+
+    if removed:
+        response = {
+            "message": "Some transactions were removed from this node",
+            "removed": removed,
+        }
+    else:
+        response = {
+            "message": "No transactions were removed from this node",
+        }
+
+    return jsonify(response), 200
 
 
 @app.route("/chain", methods=["GET"])
@@ -230,16 +281,16 @@ def consensus():
     chainStat = blockchain.chainConsensus()
 
     # authoritative list of node registry to be sent to all other nodes
-    authNodes = list(blockchain.nodes)
-    nodeObj = {"nodes": list(authNodes)}
+    nodeObj = {"nodes": list(blockchain.nodes)}
 
     # authoritative chain to be sent to all other nodes
     chainObj = {"chain": blockchain.chain}
 
     # sending authoritative node registry and chain to all other node endpoints
-    for node in authNodes:
+    for node in list(blockchain.nodes):
         requests.post(f"{node}/nodes/replace", json=nodeObj)
         requests.post(f"{node}/chain/replace", json=chainObj)
+        requests.get(f"{node}/transactions/cleanup")
 
     if chainStat:
         response = {"message": "Our chain was replaced", "chain": blockchain.chain}
