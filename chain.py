@@ -16,10 +16,11 @@ from urllib.parse import urlparse
 
 
 class Blockchain:
-    def __init__(self) -> None:
+    def __init__(self, id) -> None:
         self.chain = list()
         self.transactions = dict()
         self.nodes = set()
+        self.id = id
 
         # genesis block
         self.newBlock(proof=100, prevHash=1)
