@@ -2,6 +2,7 @@ import hashlib
 import time
 import json
 import requests
+from uuid import uuid4
 from urllib.parse import urlparse
 
 
@@ -17,7 +18,7 @@ from urllib.parse import urlparse
 class Blockchain:
     def __init__(self) -> None:
         self.chain = list()
-        self.transactions = list()
+        self.transactions = dict()
         self.nodes = set()
 
         # genesis block
@@ -46,7 +47,7 @@ class Blockchain:
         self.chain.append(block)
 
         # clearing transaction list
-        self.transactions = list()
+        self.transactions = dict()
 
         # returning reference to block
         return block
@@ -63,14 +64,12 @@ class Blockchain:
             int: Index of the Block where this transaction will be stored
         """
 
-        self.transactions.append(
-            {
-                "sender": sender,
-                "recipient": recipient,
-                "amoumnt": amount,
-                "time": time.time(),
-            }
-        )
+        self.transactions[str(uuid4())] = {
+            "sender": sender,
+            "recipient": recipient,
+            "amount": amount,
+            "time": time.time(),
+        }
 
         # returning index of block where this transaction will be stored
         return self.tail["index"] + 1
