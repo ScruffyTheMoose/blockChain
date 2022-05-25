@@ -7,11 +7,6 @@ from urllib.parse import urlparse
 
 
 # TBD
-# Each node needs to have an actual wallet for tracking all sent/recieved units
-
-# Each node's UUID needs to be tracked alongside the nodes address so when a transaction is registered, all the nodes can read
-# the transaction and be updated accordingly
-
 # Transaction validation needs to be built
 
 
