@@ -5,9 +5,6 @@ import sys
 
 from flask import Flask, jsonify, request
 
-# /holdings endpoint
-# transaction amounts need to be validated
-# atm proofs dont matter for transactions, just that every sender actually has ownership of what they are sending and not making up values
 
 # instantiating flask node
 app = Flask(__name__)
@@ -115,7 +112,7 @@ def newTrans():
     return jsonify(response), 201
 
 
-@app.route("/transactions/cleanup", methods=["GET"])
+@app.route("/transactions/_cleanup", methods=["GET"])
 def cleanTrans():
     """[GET] - Checks the chain and removes any redundant transactions from this nodes list"""
 
@@ -233,7 +230,7 @@ def registerNodes():
         if not registration:
             failed.append(node)
         else:
-            requests.post(f"{node}/nodes/response_register", json=submission)
+            requests.post(f"{node}/nodes/_response_register", json=submission)
 
     if failed:
         # there were errors, resetting registry to initial
@@ -254,7 +251,7 @@ def registerNodes():
     return jsonify(response), 201
 
 
-@app.route("/nodes/response_register", methods=["POST"])
+@app.route("/nodes/_response_register", methods=["POST"])
 def responseRegister():
     """[POST] - Endpoint for cross registering with a newly registered node
 
@@ -297,7 +294,7 @@ def consensus():
     for node in list(blockchain.nodes):
         requests.post(f"{node}/nodes/replace", json=nodeObj)
         requests.post(f"{node}/chain/replace", json=chainObj)
-        requests.get(f"{node}/transactions/cleanup")
+        requests.get(f"{node}/transactions/_cleanup")
 
     if chainStat:
         response = {"message": "Our chain was replaced", "chain": blockchain.chain}
@@ -319,8 +316,8 @@ def status():
     """[GET] - Produces all connections and account associated holdings"""
 
     # ISSUE: This will pull the current status, but if the node doesn't have access to authoritative chain, the holdings are incorrect
-    # SOLUTION: Chain consensus is required for status
-    # We will leave it broken for now to see what types of disconnects develop across the network
+    # SOLUTION: Chain consensus is required for status (/resolve endpoint)
+    # ACTION: We will leave it broken for now to see what types of disconnects develop across the network
 
     amount = 0
 
