@@ -20,7 +20,7 @@ class Blockchain:
         # genesis block
         self.newBlock(proof=100, prevHash=1)
 
-    def newBlock(self, proof, prevHash) -> dict:
+    def newBlock(self, proof: str, prevHash: str) -> dict:
         """Constructs a new Block
 
         Args:
@@ -48,7 +48,7 @@ class Blockchain:
         # returning reference to block
         return block
 
-    def newTrans(self, sender, recipient, amount) -> int:
+    def newTrans(self, sender: str, recipient: str, amount: int) -> int:
         """Create a new transaction for the current Block
 
         Args:
@@ -71,7 +71,7 @@ class Blockchain:
         return self.tail["index"] + 1
 
     @staticmethod
-    def hash(block) -> str:
+    def hash(block: dict) -> str:
         """To hash a Block
 
         Args:
@@ -99,7 +99,7 @@ class Blockchain:
 
         return self.chain[-1]
 
-    def pow(self, lastProof) -> int:
+    def pow(self, lastProof: str) -> int:
         """Proof of Work to identify the correct proof key for a Block
         In this case, want to find a new proof key such that when concatenated with the previous
         proof key, the new hash has three leading zeros.
@@ -122,7 +122,7 @@ class Blockchain:
         return proof
 
     @staticmethod
-    def verifyProof(lastProof, proof) -> bool:
+    def verifyProof(lastProof: str, proof: str) -> bool:
         """Verifies that the given proof key is valid.
 
         Args:
@@ -139,7 +139,7 @@ class Blockchain:
         # good proof key produced hash with 4 leading zeros
         return hashed[:4] == "0000"
 
-    def registerNode(self, address) -> bool:
+    def registerNode(self, address: str) -> bool:
         """Registers a new node on the chain
 
         Args:
@@ -155,7 +155,7 @@ class Blockchain:
 
         return False
 
-    def verifyChain(self, chain) -> bool:
+    def verifyChain(self, chain: list) -> bool:
         """Verifies that the current chain is valid by checking all hashes and proof keys are valid
 
         Args:
