@@ -215,6 +215,7 @@ def registerNodes():
     initNodes = blockchain.nodes
     failed = list()
 
+    # data to be posted to other nodes for cross registration
     thisNode = request.url_root
     submission = {
         "nodes": [f"{thisNode}"],
@@ -230,6 +231,7 @@ def registerNodes():
         if not registration:
             failed.append(node)
         else:
+            # cross registering
             requests.post(f"{node}/nodes/_response_register", json=submission)
 
     if failed:
