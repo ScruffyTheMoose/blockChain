@@ -3,10 +3,10 @@ import hashlib
 import json
 
 
-class ObserverNode:
+class Observer:
     def __init__(self, firstNode: str) -> None:
         """Constructor for the observer node
-        This node will serve as the intermediary for the GUI and all the nodes on the blockchain
+        This object will serve as the intermediary between the GUI and all the nodes on the blockchain
 
         Args:
             firstNode (str): URL root for any individual node already on the network
@@ -15,11 +15,13 @@ class ObserverNode:
         self.nodes = set([firstNode])
         self.chain = list()
 
-    def observe(self) -> None:
-        """Observes all nodes on the blockchain and updates observer node data"""
-
+        # building node registry
         self.updateNodes()
+        # grabbing authoritative chain
         self.updateChain()
+
+        self.nodeData = dict()
+        self.updateData()
 
     def updateNodes(self) -> bool:
         """Recursively builds the complete node registry and stores it on this instance
@@ -78,6 +80,23 @@ class ObserverNode:
             return True
 
         return False
+
+    def updateData(self) -> None:
+        """Pulls all needed data from nodes across the network to track their status"""
+
+        results = dict()
+
+        for node in self.nodes:
+            # getting chain and node registry from other nodes
+            newChain = requests.get(f"{node}/chain")["chain"]
+            newRegistry = requests.get(f"{node}/nodes")["nodes"]
+
+            results[node] = {
+                "nodes": newRegistry,
+                "chain": newChain,
+            }
+
+        self.nodeData = results
 
     def verifyChain(self, chain: list) -> bool:
         """Verifies that the given chain is valid by checking all hashes and proof keys are valid and in-order
