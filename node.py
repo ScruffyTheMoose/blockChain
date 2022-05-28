@@ -28,7 +28,7 @@ def mine():
     proof = blockchain.pow(prevProof)
 
     # awarding one unit for successfully mined Block
-    blockchain.newTrans(sender="0", recipient=node_id, amount=1)
+    blockchain.miningReward()
 
     # updating this node registry to be able to collect all transactions across the network
     blockchain.nodeConsensus()
@@ -51,7 +51,7 @@ def mine():
     block = blockchain.newBlock(proof, prevHash)
 
     # now that new block has been added to chain, we resolve the network
-    requests.get(f"{request.url_root}/resolve")
+    requests.get(f"{request.url_root}resolve")
 
     # response to be passed back to node
     response = {
@@ -87,23 +87,19 @@ def getTrans():
 
 
 @app.route("/transactions/new", methods=["POST"])
-def newTrans():
+def newTransaction():
     """[POST] - Creates a new transaction on the current Block"""
 
     # getting the JSON object that was pushed
     args = request.get_json()
-    reqs = ["sender", "recipient", "amount"]
+    reqs = ["recipient", "amount"]
 
     # verifying required 3 arguments were given
     if not all(k in args for k in reqs):
         return "Missing arguments", 400
 
-    if args["sender"] != blockchain.id:
-        return "Sender address does not match this node", 400
-
     # creating new transaction which returns the index of the block where the transaction will be stored
     idx = blockchain.newTrans(
-        sender=args["sender"],
         recipient=args["recipient"],
         amount=args["amount"],
     )
@@ -127,7 +123,10 @@ def cleanTrans():
             # checking transaction IDs from this node against the authoritative chain
             # removing any transactions with IDs already in a block
             if id in block["transactions"]:
-                removed.append(blockchain.transactions.pop(id))
+                removed.append(id)
+
+        for id in removed:
+            blockchain.transactions.pop(id)
 
     if removed:
         response = {

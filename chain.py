@@ -48,8 +48,8 @@ class Blockchain:
         # returning reference to block
         return block
 
-    def newTrans(self, sender: str, recipient: str, amount: int) -> int:
-        """Create a new transaction for the current Block
+    def newTrans(self, recipient: str, amount: int) -> int:
+        """Creates a new transaction for the current Block
 
         Args:
             sender (str): Node address of sender
@@ -61,9 +61,22 @@ class Blockchain:
         """
 
         self.transactions[str(uuid4())] = {
-            "sender": sender,
+            "sender": self.id,
             "recipient": recipient,
             "amount": amount,
+            "time": time.time(),
+        }
+
+        # returning index of block where this transaction will be stored
+        return self.tail["index"] + 1
+
+    def miningReward(self) -> int:
+        """Creates a new transaction specifically for mining a new block"""
+
+        self.transactions[str(uuid4())] = {
+            "sender": "0",
+            "recipient": self.id,
+            "amount": 1,
             "time": time.time(),
         }
 
