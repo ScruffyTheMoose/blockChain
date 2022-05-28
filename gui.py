@@ -1,35 +1,49 @@
 from observer import Observer
 from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 
 # The placeholder value must be given as input to connect the observer with the network
 # we will leave this blank for now
-observer = Observer("PLACEHOLDER")
+# observer = Observer("http://placeholder")
+
+
+class MainWindow(QWidget):
+    def __init__(self) -> None:
+        super().__init__()
+
+        # setting title
+        self.setWindowTitle("Node Manager")
+
+        # setting layout to vert box
+        self.setLayout(QHBoxLayout())
+
+        # creating label
+        label = QLabel("Test Label")
+        label.setFont(QFont("Helvetica", 25))
+        self.layout().addWidget(label)
+
+        # creating input box
+        inputBox = QLineEdit()
+        inputBox.setObjectName("name_field")
+        inputBox.setText("")
+        self.layout().addWidget(inputBox)
+
+        # creating a button
+        button = QPushButton("PRESS", clicked=lambda: press_button())
+        self.layout().addWidget(button)
+
+        def press_button():
+            label.setText(f"Hello {inputBox.text()}")
+            inputBox.setText("")
+
+        # showing window
+        self.show()
+
 
 # instantiating interface
 app = QApplication([])
-app.setStyle("Fusion")
+mainWindow = MainWindow()
 
-# instantiating window
-window = QWidget()
-
-# choosing layout mode
-layout = QVBoxLayout()
-layout.addWidget(QPushButton("top"))
-layout.addWidget(QPushButton("bottom"))
-
-# assigning layout to window
-window.setLayout(layout)
-
-#############################
-# Building basic features
-# Order, appearance, etc will be handled later 100% no joke it will happen i swear
-#############################
-
-# Dropdown menu to select which node you will be operating
-# this needs to be updated when node registry is updated
-nodeSelection = QComboBox()
-nodeSelection.addItems(list(observer.nodes))
 
 if __name__ == "__main__":
-    window.show()
     app.exec()
