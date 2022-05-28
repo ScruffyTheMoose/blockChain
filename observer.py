@@ -88,8 +88,8 @@ class Observer:
 
         for node in self.nodes:
             # getting chain and node registry from other nodes
-            newChain = requests.get(f"{node}/chain")["chain"]
-            newRegistry = requests.get(f"{node}/nodes")["nodes"]
+            newChain = requests.get(f"{node}/chain").json()["chain"]
+            newRegistry = requests.get(f"{node}/nodes").json()["nodes"]
 
             results[node] = {
                 "nodes": newRegistry,
