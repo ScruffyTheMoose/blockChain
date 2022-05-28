@@ -10,7 +10,7 @@ from PyQt5.QtGui import *
 # observer = Observer("http://placeholder")
 observer = None  # as placeholder
 
-GETOptions = {
+GEToptions = {
     "Mine": "mine",
     "Get ID": "id",
     "Get Transactions": "transactions",
@@ -18,6 +18,11 @@ GETOptions = {
     "Get Nodes": "nodes",
     "Resolve Network": "resolve",
     "Get Status": "status",
+}
+
+POSToptions = {
+    "New Transaction": "transactions/new",
+    "Register Node": "nodes/register",
 }
 
 
@@ -28,10 +33,18 @@ class MainWindow(QWidget):
         # setting title
         self.setWindowTitle("Node Manager")
         # window coords and dimensions
-        self.setGeometry(200, 200, 300, 300)
+        self.setGeometry(200, 200, 800, 500)
 
-        # vert box layout
-        self.setLayout(QVBoxLayout())
+        # horizontal main box layout
+        self.setLayout(QHBoxLayout())
+
+        # build left box
+        self.leftBox = QGroupBox("Requests")
+        self.leftBox.setLayout(QVBoxLayout())
+
+        # build right box
+        self.rightBox = QGroupBox("Info")
+        self.rightBox.setLayout(QVBoxLayout())
 
         # node registry dropdown selection
         nodes = ["http://127.0.0.1:5000"]
@@ -39,29 +52,42 @@ class MainWindow(QWidget):
         nodeList.addItems(nodes)
 
         # action dropdown selection
-        actions = [
+        actions = (
             "Mine",
+            "New Transaction",
+            "Register Node",
             "Get ID",
             "Get Transactions",
             "Get Chain",
             "Get Nodes",
             "Resolve Network",
             "Get Status",
-        ]
+        )
         actionList = QComboBox()
         actionList.addItems(actions)
 
         # button for testing features
-        testButton = QPushButton("Press to Test", clicked=lambda: getRequest())
+        testButton = QPushButton(
+            "Press to Test",
+            clicked=lambda: getRequest()
+            if actionList.currentText() in GEToptions.keys()
+            else postRequest(),
+        )
 
         # basic label to display response [TEMPORARY]
-        testLabel = QLabel("")
+        responseViewer = QTextBrowser()
 
-        # adding features to window
-        self.layout().addWidget(nodeList)
-        self.layout().addWidget(actionList)
-        self.layout().addWidget(testButton)
-        self.layout().addWidget(testLabel)
+        # adding features to left box
+        self.leftBox.layout().addWidget(nodeList)
+        self.leftBox.layout().addWidget(actionList)
+        self.leftBox.layout().addWidget(testButton)
+
+        # adding features to right box
+        self.rightBox.layout().addWidget(responseViewer)
+
+        # adding left/right to main
+        self.layout().addWidget(self.leftBox)
+        self.layout().addWidget(self.rightBox)
 
         # show window
         self.show()
@@ -75,13 +101,14 @@ class MainWindow(QWidget):
 
             # gets address from selected node in dropdown
             nodeAddress = nodeList.currentText()
-            endpoint = GETOptions[actionList.currentText()]
+            endpoint = GEToptions[actionList.currentText()]
 
             response = requests.get(f"{nodeAddress}/{endpoint}")
-            data = json.dumps(response.json())
+            # converts to string [TEMPORARY]
+            data = json.dumps(response.json(), indent=4)
 
-            # prints for now since there is no endpoint built
-            testLabel.setText(data)
+            # set data as label text for display [TEMPORARY]
+            responseViewer.setText(data)
 
 
 # instantiating interface
