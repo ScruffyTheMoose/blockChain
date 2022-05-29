@@ -162,7 +162,7 @@ class Blockchain:
         parsedURL = "http://" + urlparse(address).netloc
 
         # checking that URL was not reduced to empty string
-        if parsedURL:
+        if parsedURL and parsedURL != "http://":
             self.nodes.add(parsedURL)
             return True
 

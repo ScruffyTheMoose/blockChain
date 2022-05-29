@@ -224,6 +224,10 @@ def registerNodes():
         return "Error: Please supply a valid list of Nodes", 400
 
     for node in nodes:
+        # skipping blank entries
+        if node == "":
+            continue
+
         registration = blockchain.registerNode(node)
 
         # checking that address was valid
