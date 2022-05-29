@@ -182,7 +182,6 @@ class MainWindow(QWidget):
             else:  # registering new node
                 # getting input data
                 newNode = recipientInput.text()
-                print(newNode)
 
                 # data to be sent
                 submission = {
@@ -196,6 +195,7 @@ class MainWindow(QWidget):
             """Update and display observer data"""
 
             # updating the observer nodes data for each node on network
+            observer.updateNodes()
             observer.updateData()
 
             # displaying the updated data
