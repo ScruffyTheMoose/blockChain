@@ -46,17 +46,18 @@ class MainWindow(QWidget):
         self.rightBox.setLayout(QVBoxLayout())
 
         # node registry dropdown selection
-        nodeBox = QGroupBox("Select Node:")
-        nodeBox.setLayout(QVBoxLayout())
-        nodeSelection = QComboBox()
-        nodeSelection.addItems(observer.nodes)
-        nodeBox.layout().addWidget(nodeSelection)
+        self.nodeBox = QGroupBox("Select Node:")
+        self.nodeBox.setLayout(QVBoxLayout())
+        self.nodeSelection = QComboBox()
+        self.nodeSelection.addItems(observer.nodes)
+        self.nodeSelection
+        self.nodeBox.layout().addWidget(self.nodeSelection)
         # end node registry dropdown build
 
         # action dropdown selection
-        actionBox = QGroupBox("Select Action")
-        actionBox.setLayout(QVBoxLayout())
-        actions = (
+        self.actionBox = QGroupBox("Select Action")
+        self.actionBox.setLayout(QVBoxLayout())
+        self.actionsList = (
             "Mine",
             "New Transaction",
             "Register Node",
@@ -67,72 +68,74 @@ class MainWindow(QWidget):
             "Resolve Network",
             "Get Status",
         )
-        actionSelection = QComboBox()
-        actionSelection.addItems(actions)
-        actionBox.layout().addWidget(actionSelection)
+        self.actionSelection = QComboBox()
+        self.actionSelection.addItems(self.actionsList)
+        self.actionBox.layout().addWidget(self.actionSelection)
         # end action dropdown build
 
         # recipient address input
-        recipientBox = QGroupBox("Registration Address:")
-        recipientBox.setLayout(QVBoxLayout())
-        recipientInput = QLineEdit()
-        recipientInput.setPlaceholderText("http://192.168.1.1:5000")
-        recipientBox.layout().addWidget(recipientInput)
+        self.recipientBox = QGroupBox("Registration Address:")
+        self.recipientBox.setLayout(QVBoxLayout())
+        self.recipientInput = QLineEdit()
+        self.recipientInput.setPlaceholderText("http://192.168.1.1:5000")
+        self.recipientBox.layout().addWidget(self.recipientInput)
         # end recipient address build
 
         # ID address input
-        idBox = QGroupBox("Node ID:")
-        idBox.setLayout(QVBoxLayout())
-        idInput = QLineEdit()
-        idInput.setPlaceholderText("52ad26bbc61941d3bff1f8ecd27ab81e")
-        idBox.layout().addWidget(idInput)
+        self.idBox = QGroupBox("Node ID:")
+        self.idBox.setLayout(QVBoxLayout())
+        self.idInput = QLineEdit()
+        self.idInput.setPlaceholderText("52ad26bbc61941d3bff1f8ecd27ab81e")
+        self.idBox.layout().addWidget(self.idInput)
         # end ID address build
 
         # amount to send input
-        amountBox = QGroupBox("Amount:")
-        amountBox.setLayout(QVBoxLayout())
-        amountInput = QLineEdit()
-        amountInput.setPlaceholderText("100")
-        amountBox.layout().addWidget(amountInput)
+        self.amountBox = QGroupBox("Amount:")
+        self.amountBox.setLayout(QVBoxLayout())
+        self.amountInput = QLineEdit()
+        self.amountInput.setPlaceholderText("100")
+        self.amountBox.layout().addWidget(self.amountInput)
         # end amount build
 
         # button applying action
-        sendButton = QPushButton(
+        self.sendButton = QPushButton(
             "Submit",
             clicked=lambda: getRequest()
-            if actionSelection.currentText() in GEToptions.keys()
+            if self.actionSelection.currentText() in GEToptions.keys()
             else postRequest(),
         )
 
         # text viewer to display response
-        responseViewer = QTextBrowser()
+        self.responseViewer = QTextBrowser()
 
         # text viewer to display observer data
-        observerViewer = QTextBrowser()
-        observerViewer.setText(json.dumps(observer.nodeData, indent=4))
+        self.observerViewer = QTextBrowser()
+        self.observerViewer.setText(json.dumps(observer.nodeData, indent=4))
 
         # button to update observerViewer
-        updateObservations = QPushButton("Update", clicked=lambda: observerDataUpdate())
+        self.updateObservations = QPushButton(
+            "Update", clicked=lambda: observerDataUpdate()
+        )
 
         #### adding features to left box ####
-        leftAdd = [
-            nodeBox,
-            actionBox,
-            recipientBox,
-            idBox,
-            amountBox,
-            sendButton,
+        self.leftAdd = [
+            self.nodeBox,
+            self.actionBox,
+            self.recipientBox,
+            self.idBox,
+            self.amountBox,
+            self.sendButton,
         ]
 
-        for item in leftAdd:
+        for item in self.leftAdd:
             self.leftBox.layout().addWidget(item)
 
         #### adding features to center box ####
-        self.centerBox.layout().addWidget(responseViewer)
+        self.centerBox.layout().addWidget(self.responseViewer)
 
         #### adding features to right box ####
-        self.rightBox.layout().addWidget(observerViewer)
-        self.rightBox.layout().addWidget(updateObservations)
+        self.rightBox.layout().addWidget(self.observerViewer)
+        self.rightBox.layout().addWidget(self.updateObservations)
 
         #### adding left/center/right to main ####
         self.layout().addWidget(self.leftBox)
@@ -146,8 +149,8 @@ class MainWindow(QWidget):
             """Sends GET request to selected node and endpoint"""
 
             # gets address from selected node in dropdown
-            nodeAddress = nodeSelection.currentText()
-            endpoint = GEToptions[actionSelection.currentText()]
+            nodeAddress = self.nodeSelection.currentText()
+            endpoint = GEToptions[self.actionSelection.currentText()]
 
             # sending GET request
             response = requests.get(f"{nodeAddress}/{endpoint}")
@@ -155,20 +158,20 @@ class MainWindow(QWidget):
             data = json.dumps(response.json(), indent=4)
 
             # set data as label text for display [TEMPORARY]
-            responseViewer.setText(data)
+            self.responseViewer.setText(data)
 
         def postRequest() -> None:
             """Sends POST request to selected node and endpoint"""
 
-            actionType = actionSelection.currentText()  # str
+            actionType = self.actionSelection.currentText()  # str
 
             # gets address from the selected node in dropdown
-            nodeAddress = nodeSelection.currentText()
+            nodeAddress = self.nodeSelection.currentText()
 
             if actionType == "New Transaction":
                 # getting input data
-                recipient = recipientInput.text()
-                amount = amountInput.text()
+                recipient = self.recipientInput.text()
+                amount = self.amountInput.text()
 
                 # data to be sent
                 submission = {
@@ -181,7 +184,7 @@ class MainWindow(QWidget):
 
             else:  # registering new node
                 # getting input data
-                newNode = recipientInput.text()
+                newNode = self.recipientInput.text()
 
                 # data to be sent
                 submission = {
@@ -199,7 +202,7 @@ class MainWindow(QWidget):
             observer.updateData()
 
             # displaying the updated data
-            observerViewer.setText(json.dumps(observer.nodeData, indent=4))
+            self.observerViewer.setText(json.dumps(observer.nodeData, indent=4))
 
 
 # instantiating interface
