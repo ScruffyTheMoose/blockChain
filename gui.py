@@ -76,7 +76,7 @@ class MainWindow(QWidget):
 
         # button for testing features
         sendButton = QPushButton(
-            "Press to Test",
+            "Submit",
             clicked=lambda: getRequest()
             if actionSelection.currentText() in GEToptions.keys()
             else postRequest(),
@@ -88,6 +88,9 @@ class MainWindow(QWidget):
         # text viewer to display observer data
         observerViewer = QTextBrowser()
         observerViewer.setText(json.dumps(observer.nodeData, indent=4))
+
+        # button to update observerViewer
+        updateObservations = QPushButton("Update", clicked=lambda: observerDataUpdate())
 
         #### adding features to left box ####
         leftAdd = [
@@ -110,6 +113,7 @@ class MainWindow(QWidget):
 
         #### adding features to right box ####
         self.rightBox.layout().addWidget(observerViewer)
+        self.rightBox.layout().addWidget(updateObservations)
 
         #### adding left/center/right to main ####
         self.layout().addWidget(self.leftBox)
@@ -168,6 +172,15 @@ class MainWindow(QWidget):
 
                 # sending POST request
                 requests.post(f"{nodeAddress}/nodes/register", json=submission)
+
+        def observerDataUpdate() -> None:
+            """Update and display observer data"""
+
+            # updating the observer nodes data for each node on network
+            observer.updateData()
+
+            # displaying the updated data
+            observerViewer.setText(json.dumps(observer.nodeData, indent=4))
 
 
 # instantiating interface
