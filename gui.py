@@ -46,10 +46,16 @@ class MainWindow(QWidget):
         self.rightBox.setLayout(QVBoxLayout())
 
         # node registry dropdown selection
+        nodeBox = QGroupBox("Select Node:")
+        nodeBox.setLayout(QVBoxLayout())
         nodeSelection = QComboBox()
         nodeSelection.addItems(observer.nodes)
+        nodeBox.layout().addWidget(nodeSelection)
+        # end node registry dropdown build
 
         # action dropdown selection
+        actionBox = QGroupBox("Select Action")
+        actionBox.setLayout(QVBoxLayout())
         actions = (
             "Mine",
             "New Transaction",
@@ -63,18 +69,34 @@ class MainWindow(QWidget):
         )
         actionSelection = QComboBox()
         actionSelection.addItems(actions)
+        actionBox.layout().addWidget(actionSelection)
+        # end action dropdown build
 
-        # input boxes and associated labels
-        recipientLabel = QLabel("Recipient Address:")
+        # recipient address input
+        recipientBox = QGroupBox("Registration Address:")
+        recipientBox.setLayout(QVBoxLayout())
         recipientInput = QLineEdit()
+        recipientInput.setPlaceholderText("http://192.168.1.1:5000")
+        recipientBox.layout().addWidget(recipientInput)
+        # end recipient address build
 
-        amountLabel = QLabel("Amount:")
+        # ID address input
+        idBox = QGroupBox("Node ID:")
+        idBox.setLayout(QVBoxLayout())
+        idInput = QLineEdit()
+        idInput.setPlaceholderText("52ad26bbc61941d3bff1f8ecd27ab81e")
+        idBox.layout().addWidget(idInput)
+        # end ID address build
+
+        # amount to send input
+        amountBox = QGroupBox("Amount:")
+        amountBox.setLayout(QVBoxLayout())
         amountInput = QLineEdit()
+        amountInput.setPlaceholderText("100")
+        amountBox.layout().addWidget(amountInput)
+        # end amount build
 
-        addressLabel = QLabel("New Node Address:")
-        addressInput = QLineEdit()
-
-        # button for testing features
+        # button applying action
         sendButton = QPushButton(
             "Submit",
             clicked=lambda: getRequest()
@@ -94,14 +116,11 @@ class MainWindow(QWidget):
 
         #### adding features to left box ####
         leftAdd = [
-            nodeSelection,
-            actionSelection,
-            recipientLabel,
-            recipientInput,
-            amountLabel,
-            amountInput,
-            addressLabel,
-            addressInput,
+            nodeBox,
+            actionBox,
+            recipientBox,
+            idBox,
+            amountBox,
             sendButton,
         ]
 
@@ -162,7 +181,7 @@ class MainWindow(QWidget):
 
             else:  # registering new node
                 # getting input data
-                newNode = addressInput.text()
+                newNode = recipientInput.text()
                 print(newNode)
 
                 # data to be sent
