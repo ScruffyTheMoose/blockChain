@@ -5,11 +5,11 @@ from observer import Observer
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-# The placeholder value must be given as input to connect the observer with the network
-# we will leave this blank for now
-# observer = Observer("http://placeholder")
-observer = None  # as placeholder
 
+# placeholder address for local testing
+observer = Observer("http://127.0.0.1:5000")
+
+# all GET request options to make menu operations easier
 GEToptions = {
     "Mine": "mine",
     "Get ID": "id",
@@ -18,11 +18,6 @@ GEToptions = {
     "Get Nodes": "nodes",
     "Resolve Network": "resolve",
     "Get Status": "status",
-}
-
-POSToptions = {
-    "New Transaction": "transactions/new",
-    "Register Node": "nodes/register",
 }
 
 
@@ -39,17 +34,20 @@ class MainWindow(QWidget):
         self.setLayout(QHBoxLayout())
 
         # build left box
-        self.leftBox = QGroupBox("Requests")
+        self.leftBox = QGroupBox("Menu")
         self.leftBox.setLayout(QVBoxLayout())
 
+        # build center box
+        self.centerBox = QGroupBox("Response")
+        self.centerBox.setLayout(QVBoxLayout())
+
         # build right box
-        self.rightBox = QGroupBox("Info")
+        self.rightBox = QGroupBox("Observer")
         self.rightBox.setLayout(QVBoxLayout())
 
         # node registry dropdown selection
-        nodes = ["http://127.0.0.1:5000"]
-        nodeList = QComboBox()
-        nodeList.addItems(nodes)
+        nodeSelection = QComboBox()
+        nodeSelection.addItems(observer.nodes)
 
         # action dropdown selection
         actions = (
@@ -63,52 +61,113 @@ class MainWindow(QWidget):
             "Resolve Network",
             "Get Status",
         )
-        actionList = QComboBox()
-        actionList.addItems(actions)
+        actionSelection = QComboBox()
+        actionSelection.addItems(actions)
+
+        # input boxes and associated labels
+        recipientLabel = QLabel("Recipient Address:")
+        recipientInput = QLineEdit()
+
+        amountLabel = QLabel("Amount:")
+        amountInput = QLineEdit()
+
+        addressLabel = QLabel("New Node Address:")
+        addressInput = QLineEdit()
 
         # button for testing features
-        testButton = QPushButton(
+        sendButton = QPushButton(
             "Press to Test",
             clicked=lambda: getRequest()
-            if actionList.currentText() in GEToptions.keys()
+            if actionSelection.currentText() in GEToptions.keys()
             else postRequest(),
         )
 
-        # basic label to display response [TEMPORARY]
+        # text viewer to display response
         responseViewer = QTextBrowser()
 
-        # adding features to left box
-        self.leftBox.layout().addWidget(nodeList)
-        self.leftBox.layout().addWidget(actionList)
-        self.leftBox.layout().addWidget(testButton)
+        # text viewer to display observer data
+        observerViewer = QTextBrowser()
+        observerViewer.setText(json.dumps(observer.nodeData, indent=4))
 
-        # adding features to right box
-        self.rightBox.layout().addWidget(responseViewer)
+        #### adding features to left box ####
+        leftAdd = [
+            nodeSelection,
+            actionSelection,
+            recipientLabel,
+            recipientInput,
+            amountLabel,
+            amountInput,
+            addressLabel,
+            addressInput,
+            sendButton,
+        ]
 
-        # adding left/right to main
+        for item in leftAdd:
+            self.leftBox.layout().addWidget(item)
+
+        #### adding features to center box ####
+        self.centerBox.layout().addWidget(responseViewer)
+
+        #### adding features to right box ####
+        self.rightBox.layout().addWidget(observerViewer)
+
+        #### adding left/center/right to main ####
         self.layout().addWidget(self.leftBox)
+        self.layout().addWidget(self.centerBox)
         self.layout().addWidget(self.rightBox)
 
         # show window
         self.show()
 
-        ##################
-        ## GET requests ##
-        ##################
-
         def getRequest() -> None:
-            """Sends get request to selected node and endpoint"""
+            """Sends GET request to selected node and endpoint"""
 
             # gets address from selected node in dropdown
-            nodeAddress = nodeList.currentText()
-            endpoint = GEToptions[actionList.currentText()]
+            nodeAddress = nodeSelection.currentText()
+            endpoint = GEToptions[actionSelection.currentText()]
 
+            # sending GET request
             response = requests.get(f"{nodeAddress}/{endpoint}")
             # converts to string [TEMPORARY]
             data = json.dumps(response.json(), indent=4)
 
             # set data as label text for display [TEMPORARY]
             responseViewer.setText(data)
+
+        def postRequest() -> None:
+            """Sends POST request to selected node and endpoint"""
+
+            actionType = actionSelection.currentText()  # str
+
+            # gets address from the selected node in dropdown
+            nodeAddress = nodeSelection.currentText()
+
+            if actionType == "New Transaction":
+                # getting input data
+                recipient = recipientInput.text()
+                amount = amountInput.text()
+
+                # data to be sent
+                submission = {
+                    "recipient": recipient,
+                    "amount": amount,
+                }
+
+                # sending POST request
+                requests.post(f"{nodeAddress}/transactions/new", json=submission)
+
+            else:  # registering new node
+                # getting input data
+                newNode = addressInput.text()
+                print(newNode)
+
+                # data to be sent
+                submission = {
+                    "nodes": [newNode],
+                }
+
+                # sending POST request
+                requests.post(f"{nodeAddress}/nodes/register", json=submission)
 
 
 # instantiating interface
