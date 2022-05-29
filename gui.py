@@ -50,7 +50,7 @@ class MainWindow(QWidget):
         self.nodeBox.setLayout(QVBoxLayout())
         self.nodeSelection = QComboBox()
         self.nodeSelection.addItems(observer.nodes)
-        self.nodeSelection
+        self.nodeSelection.currentTextChanged.connect(self.nodeSelectChange)
         self.nodeBox.layout().addWidget(self.nodeSelection)
         # end node registry dropdown build
 
@@ -100,9 +100,9 @@ class MainWindow(QWidget):
         # button applying action
         self.sendButton = QPushButton(
             "Submit",
-            clicked=lambda: getRequest()
+            clicked=lambda: self.getRequest()
             if self.actionSelection.currentText() in GEToptions.keys()
-            else postRequest(),
+            else self.postRequest(),
         )
 
         # text viewer to display response
@@ -114,7 +114,7 @@ class MainWindow(QWidget):
 
         # button to update observerViewer
         self.updateObservations = QPushButton(
-            "Update", clicked=lambda: observerDataUpdate()
+            "Update", clicked=lambda: self.observerDataUpdate()
         )
 
         #### adding features to left box ####
@@ -145,64 +145,87 @@ class MainWindow(QWidget):
         # show window
         self.show()
 
-        def getRequest() -> None:
-            """Sends GET request to selected node and endpoint"""
+    def getRequest(self) -> None:
+        """Sends GET request to selected node and endpoint"""
 
-            # gets address from selected node in dropdown
-            nodeAddress = self.nodeSelection.currentText()
-            endpoint = GEToptions[self.actionSelection.currentText()]
+        # gets address from selected node in dropdown
+        nodeAddress = self.nodeSelection.currentText()
+        endpoint = GEToptions[self.actionSelection.currentText()]
 
-            # sending GET request
-            response = requests.get(f"{nodeAddress}/{endpoint}")
-            # converts to string [TEMPORARY]
+        # sending GET request
+        response = requests.get(f"{nodeAddress}/{endpoint}")
+        # converts to string
+        data = json.dumps(response.json(), indent=4)
+
+        # set data as viewer text for display
+        self.responseViewer.setText(data)
+
+    def postRequest(self) -> None:
+        """Sends POST request to selected node and endpoint"""
+
+        actionType = self.actionSelection.currentText()  # str
+
+        # gets address from the selected node in dropdown
+        nodeAddress = self.nodeSelection.currentText()
+
+        if actionType == "New Transaction":
+            # getting input data
+            recipient = self.recipientInput.text()
+            amount = self.amountInput.text()
+
+            # data to be sent
+            submission = {
+                "recipient": recipient,
+                "amount": amount,
+            }
+
+            # sending POST request
+            response = requests.post(f"{nodeAddress}/transactions/new", json=submission)
+            # converting to reading string
             data = json.dumps(response.json(), indent=4)
 
-            # set data as label text for display [TEMPORARY]
+            # set data as viewer text for display
             self.responseViewer.setText(data)
 
-        def postRequest() -> None:
-            """Sends POST request to selected node and endpoint"""
+        else:  # registering new node
+            # getting input data
+            newNode = self.recipientInput.text()
 
-            actionType = self.actionSelection.currentText()  # str
+            # data to be sent
+            submission = {
+                "nodes": [newNode],
+            }
 
-            # gets address from the selected node in dropdown
-            nodeAddress = self.nodeSelection.currentText()
+            # sending POST request
+            response = requests.post(f"{nodeAddress}/nodes/register", json=submission)
+            # converting to reading string
+            data = json.dumps(response.json(), indent=4)
 
-            if actionType == "New Transaction":
-                # getting input data
-                recipient = self.recipientInput.text()
-                amount = self.amountInput.text()
+            # set data as viewer text for display
+            self.responseViewer.setText(data)
 
-                # data to be sent
-                submission = {
-                    "recipient": recipient,
-                    "amount": amount,
-                }
+    def observerDataUpdate(self) -> None:
+        """Update and display observer data"""
 
-                # sending POST request
-                requests.post(f"{nodeAddress}/transactions/new", json=submission)
+        # updating the observer nodes data for each node on network
+        observer.updateNodes()
+        observer.updateData()
 
-            else:  # registering new node
-                # getting input data
-                newNode = self.recipientInput.text()
+        # displaying the updated data
+        self.observerViewer.setText(json.dumps(observer.nodeData, indent=4))
 
-                # data to be sent
-                submission = {
-                    "nodes": [newNode],
-                }
+    def nodeSelectChange(self):
+        """Changes displayed data based on which node is selected from menu"""
 
-                # sending POST request
-                requests.post(f"{nodeAddress}/nodes/register", json=submission)
+        # requesting data
+        nodeAddress = self.nodeSelection.currentText()
+        response = requests.get(f"{nodeAddress}/chain")
 
-        def observerDataUpdate() -> None:
-            """Update and display observer data"""
+        # converts to string
+        data = json.dumps(response.json(), indent=4)
 
-            # updating the observer nodes data for each node on network
-            observer.updateNodes()
-            observer.updateData()
-
-            # displaying the updated data
-            self.observerViewer.setText(json.dumps(observer.nodeData, indent=4))
+        # set data as viewer text for display
+        self.responseViewer.setText(data)
 
 
 # instantiating interface
