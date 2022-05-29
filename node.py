@@ -217,7 +217,7 @@ def registerNodes():
     # data to be posted to other nodes for cross registration
     thisNode = request.url_root
     submission = {
-        "nodes": [f"{thisNode}"],
+        "nodes": [thisNode],
     }
 
     if not nodes or nodes is None:
