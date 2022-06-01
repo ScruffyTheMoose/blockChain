@@ -8,7 +8,7 @@
 
 ## User Interface
 In addition to the private blockchain, I built a simple GUI using **PyQt5** for controlling node operations and interactions to make sending GET and POST requests easier while working with the network. A user can select which node to send a request to, the type of request, and any POST-required input. An "observer" node on the network is tied directly to the GUI which will keep track of any changes to each individual node.
-![GUI Demo Image](https://github.com/ScruffyTheMoose/blockChain/blob/main/imgs/Node%20Manager.PNG)
+![GUI Demo Image](https://raw.githubusercontent.com/ScruffyTheMoose/blockChain/main/imgs/Node%20Manager.PNG)
 
 ## Endpoints
 At the moment, over a dozen endpoints exist for controlling node operations and interactions. Some of these endpoints exist strictly for automated calls between nodes. I will list the useable endpoints below, but I encourage reading through the code to better understand how each endpoint works and the structure of responses.
