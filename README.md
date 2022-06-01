@@ -1,70 +1,43 @@
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)
+![Python](https://img.shields.io/github/pipenv/locked/python-version/ScruffyTheMoose/blockChain)
+![Flask](https://img.shields.io/github/pipenv/locked/dependency-version/ScruffyTheMoose/blockChain/flask)
+![PyQt5](https://img.shields.io/github/pipenv/locked/dependency-version/ScruffyTheMoose/blockChain/pyqt5)
+![requests](https://img.shields.io/github/pipenv/locked/dependency-version/ScruffyTheMoose/blockChain/requests)
 
-`CRAPchain` is a private blockchain built from scratch purely to learn about this popular (and useless) decentralized network technology. Through a dynamic network of nodes, CRAPchain can facilitate transactions and mint new blocks all while maintaining consensus. All operations on the network are validated using unique node IDs and a proofing algorithm.
+## About
+`blockChain` is a private blockchain built from scratch using **Python** and **Flask** purely to learn about this popular decentralized technology. Through a dynamic network of nodes, this private blockchain can facilitate transactions and mint new blocks all while maintaining consensus. All operations on the network are validated using unique node IDs, a proofing algorithm for each block, and a consensus algorithm. Because each node is controlled exclusively through network requests, it is extremely easy to automate operations.
 
-At the moment, 13 endpoints exist for controlling node operations -
-```
-/mine
-```
-GET - This mode mines a new block
+## User Interface
+In addition to the private blockchain, I built a simple GUI using **PyQt5** for controlling node operations and interactions to make sending GET and POST requests easier while working with the network. A user can select which node to send a request to, the type of request, and any POST-required input. An "observer" node on the network is tied directly to the GUI which will keep track of any changes to each individual node.
+![GUI Demo Image](https://github.com/ScruffyTheMoose/blockChain/blob/main/imgs/Node%20Manager.PNG)
 
-```
-/id
-```
-GET - Returns the ID of this node
+## Endpoints
+At the moment, over a dozen endpoints exist for controlling node operations and interactions. Some of these endpoints exist strictly for automated calls between nodes. I will list the useable endpoints below, but I encourage reading through the code to better understand how each endpoint works and the structure of responses.
 
-```
-/transactions
-```
-GET - Returns the current registry of transactions on this node
+#### GET Requests
+- Mining a new block:
+  - /mine
+ 
+- Get the node's ID:
+  - /id
 
-```
-/transactions/new
-```
-POST - Generates a new transaction and adds it to the registry on this node
+- Get the node's transaction registry:
+  - /transactions
 
-```
-/transactions/_cleanup
-```
-GET - To be called while resolving the network
+- Get the node's current blockchain:
+  - /chain
 
-```
-/chain
-```
-GET - Returns the chain on this node
+- Get the node's node registry:
+  - /nodes
 
-```
-/chain/replace
-```
-POST - Validates the given chain and replaces obsolete chain on this node
+- Resolves the network using the consensus algorithm:
+  - /resolve
 
-```
-/nodes
-```
-GET - Returns the registry of nodes on this node
+- Get the node's current holdings and node registry:
+  - /status
 
-```
-/nodes/replace
-```
-POST - Pushing new nodes to the node registry on this node
+#### POST Requests
+- Create a new transaction:
+  - /transactions/new
 
-```
-/nodes/register
-```
-POST - Cross registers this node and the given node
-
-```
-/nodes/_response_register
-```
-POST - To be when registering a new node
-
-```
-/resolve
-```
-GET - Resolves all nodes across the network, ensuring every node has the authoritative chain and node registry while also removing old transactions
-
-```
-/status
-```
-GET - Returns the current connections and known holdings of this node
+- Registers a new node:
+  - /nodes/register
