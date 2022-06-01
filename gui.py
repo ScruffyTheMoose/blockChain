@@ -1,5 +1,6 @@
 import requests
 import json
+import sys
 
 from observer import Observer
 from PyQt5.QtWidgets import *
@@ -7,7 +8,8 @@ from PyQt5.QtGui import *
 
 
 # placeholder address for local testing
-observer = Observer("http://127.0.0.1:5000")
+# [TEMPORARY]
+observer = Observer(sys.argv[1])
 
 # all GET request options to make menu operations easier
 GEToptions = {
@@ -28,7 +30,7 @@ class MainWindow(QWidget):
         # setting title
         self.setWindowTitle("Node Manager")
         # window coords and dimensions
-        self.setGeometry(200, 200, 800, 500)
+        self.setGeometry(300, 200, 1500, 500)
 
         # horizontal main box layout
         self.setLayout(QHBoxLayout())
@@ -50,7 +52,6 @@ class MainWindow(QWidget):
         self.nodeBox.setLayout(QVBoxLayout())
         self.nodeSelection = QComboBox()
         self.nodeSelection.addItems(observer.nodes)
-        self.nodeSelection.currentTextChanged.connect(self.nodeSelectChange)
         self.nodeBox.layout().addWidget(self.nodeSelection)
         # end node registry dropdown build
 
@@ -98,12 +99,13 @@ class MainWindow(QWidget):
         # end amount build
 
         # button applying action
-        self.sendButton = QPushButton(
-            "Submit",
-            clicked=lambda: self.getRequest()
-            if self.actionSelection.currentText() in GEToptions.keys()
-            else self.postRequest(),
+        self.sendButton = QPushButton("Submit", clicked=lambda: self.submitButton())
+
+        # label to clarify what response is for
+        self.responseLabel = QLabel(
+            f"{self.nodeSelection.currentText()} --- {self.actionSelection.currentText().upper()}"
         )
+        self.responseLabel.setStyleSheet("font-weight: bold; color: blue")
 
         # text viewer to display response
         self.responseViewer = QTextBrowser()
@@ -111,11 +113,6 @@ class MainWindow(QWidget):
         # text viewer to display observer data
         self.observerViewer = QTextBrowser()
         self.observerViewer.setText(json.dumps(observer.nodeData, indent=4))
-
-        # button to update observerViewer
-        self.updateObservations = QPushButton(
-            "Update", clicked=lambda: self.observerDataUpdate()
-        )
 
         #### adding features to left box ####
         self.leftAdd = [
@@ -131,11 +128,11 @@ class MainWindow(QWidget):
             self.leftBox.layout().addWidget(item)
 
         #### adding features to center box ####
+        self.centerBox.layout().addWidget(self.responseLabel)
         self.centerBox.layout().addWidget(self.responseViewer)
 
         #### adding features to right box ####
         self.rightBox.layout().addWidget(self.observerViewer)
-        self.rightBox.layout().addWidget(self.updateObservations)
 
         #### adding left/center/right to main ####
         self.layout().addWidget(self.leftBox)
@@ -157,6 +154,11 @@ class MainWindow(QWidget):
         # converts to string
         data = json.dumps(response.json(), indent=4)
 
+        # labeling response
+        self.responseLabel.setText(
+            f"{self.nodeSelection.currentText()} --- {self.actionSelection.currentText().upper()}"
+        )
+
         # set data as viewer text for display
         self.responseViewer.setText(data)
 
@@ -170,7 +172,7 @@ class MainWindow(QWidget):
 
         if actionType == "New Transaction":
             # getting input data
-            recipient = self.recipientInput.text()
+            recipient = self.idInput.text()
             amount = self.amountInput.text()
 
             # data to be sent
@@ -183,6 +185,11 @@ class MainWindow(QWidget):
             response = requests.post(f"{nodeAddress}/transactions/new", json=submission)
             # converting to reading string
             data = json.dumps(response.json(), indent=4)
+
+            # labeling response
+            self.responseLabel.setText(
+                f"{self.nodeSelection.currentText()} --- {self.actionSelection.currentText().upper()}"
+            )
 
             # set data as viewer text for display
             self.responseViewer.setText(data)
@@ -201,6 +208,11 @@ class MainWindow(QWidget):
             # converting to reading string
             data = json.dumps(response.json(), indent=4)
 
+            # labeling response
+            self.responseLabel.setText(
+                f"{self.nodeSelection.currentText()} --- {self.actionSelection.currentText().upper()}"
+            )
+
             # set data as viewer text for display
             self.responseViewer.setText(data)
 
@@ -208,24 +220,34 @@ class MainWindow(QWidget):
         """Update and display observer data"""
 
         # updating the observer nodes data for each node on network
+        origNodes = observer.nodes
         observer.updateNodes()
+
+        # adding only new nodes to selection menu
+        for node in observer.nodes:
+            if node not in origNodes:
+                self.nodeSelection.addItem(node)
+
+        # updating the authoritative chain tracked by observer
+        observer.updateChain()
+
+        # updating individual node status on observer
         observer.updateData()
 
         # displaying the updated data
         self.observerViewer.setText(json.dumps(observer.nodeData, indent=4))
 
-    def nodeSelectChange(self):
+    def submitButton(self):
         """Changes displayed data based on which node is selected from menu"""
 
-        # requesting data
-        nodeAddress = self.nodeSelection.currentText()
-        response = requests.get(f"{nodeAddress}/chain")
+        # determining type of request and handling
+        if self.actionSelection.currentText() in GEToptions.keys():
+            self.getRequest()
+        else:
+            self.postRequest()
 
-        # converts to string
-        data = json.dumps(response.json(), indent=4)
-
-        # set data as viewer text for display
-        self.responseViewer.setText(data)
+        # updating observer data after changes made on network
+        self.observerDataUpdate()
 
 
 # instantiating interface

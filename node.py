@@ -228,6 +228,13 @@ def registerNodes():
         if node == "":
             continue
 
+        # catching dead addresses
+        try:
+            requests.get(f"{node}/id")
+        except:
+            failed.append(node)
+            continue
+
         registration = blockchain.registerNode(node)
 
         # checking that address was valid
@@ -330,18 +337,18 @@ def status():
     for block in blockchain.chain:
         for transaction in block["transactions"].values():
             if transaction["sender"] == blockchain.id:
-                amount -= transaction["amount"]
+                amount -= int(transaction["amount"])
 
             if transaction["recipient"] == blockchain.id:
-                amount += transaction["amount"]
+                amount += int(transaction["amount"])
 
     # checking currently tracked transactions
     for transaction in blockchain.transactions.values():
         if transaction["sender"] == blockchain.id:
-            amount -= transaction["amount"]
+            amount -= int(transaction["amount"])
 
         if transaction["recipient"] == blockchain.id:
-            amount += transaction["amount"]
+            amount += int(transaction["amount"])
 
     response = {
         "connections": list(blockchain.nodes),
@@ -353,4 +360,4 @@ def status():
 
 if __name__ == "__main__":
     portNum = sys.argv[1]
-    app.run(host="127.0.0.1", port=portNum)
+    app.run(host="0.0.0.0", port=portNum)
